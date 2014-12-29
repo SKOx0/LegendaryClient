@@ -64,12 +64,22 @@ namespace LegendaryClient.Logic
     /// </summary>
     internal static class Client
     {
+        public delegate void OnAccept(bool accept);
+
+        public static event OnAccept PlayerAccepedQueue;
+
+        public static void SendAccept(bool accept)
+        {
+            if (PlayerAccepedQueue != null)
+                PlayerAccepedQueue(accept);
+        }
+
         public static string ToSHA1(this string input)
         {
             using (SHA1Managed sha1 = new SHA1Managed())
             {
                 var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(input));
-                return Convert.ToBase64String(hash);
+                return System.Convert.ToBase64String(hash);
             }
         }
         internal static bool patching = true;
@@ -85,17 +95,17 @@ namespace LegendaryClient.Logic
         ///     Gets the value of the league of Legends Settings
         /// </summary>
         /// <returns>All of the League Of Legends Settings</returns>
-        public static Dictionary<String, String> LeagueSettingsReader(this string FileLocation)
+        public static Dictionary<String, String> LeagueSettingsReader(this string fileLocation)
         {
             var settings = new Dictionary<String, String>();
             try
             {
-                string[] file = File.ReadAllLines(FileLocation);
+                string[] file = File.ReadAllLines(fileLocation);
                 foreach (string x in from x in file
-                    where !String.IsNullOrEmpty(x) && !String.IsNullOrWhiteSpace(x)
-                    where !x.Contains("[") && !x.Contains("]")
-                    where !x.StartsWith("#") && x.Contains("=")
-                    select x)
+                                     where !String.IsNullOrEmpty(x) && !String.IsNullOrWhiteSpace(x)
+                                     where !x.Contains("[") && !x.Contains("]")
+                                     where !x.StartsWith("#") && x.Contains("=")
+                                     select x)
                 {
                     try
                     {
@@ -114,7 +124,7 @@ namespace LegendaryClient.Logic
         }
 
         public static bool InstaCall = false;
-        public static string CallString = "";
+        public static string CallString = string.Empty;
 
         public static Brush Change()
         {
@@ -122,12 +132,16 @@ namespace LegendaryClient.Logic
             var bc = new BrushConverter();
             if (y.Contains("Blue"))
                 return (Brush)bc.ConvertFrom("#FF1585B5");
+
             if (y.Contains("Red"))
                 return (Brush)bc.ConvertFrom("#FFA01414");
+
             if (y.Contains("Green"))
                 return (Brush)bc.ConvertFrom("#FF2DA014");
+
             if (y.Contains("Purple"))
                 return (Brush)bc.ConvertFrom("#FF5A14A0");
+
             return (Brush)bc.ConvertFrom("#FF141414"); //Steel
         }
 
@@ -144,18 +158,19 @@ namespace LegendaryClient.Logic
                 return new LoginDataPacket();
 
             accountslist.Add(packet.AllSummonerData.Summoner.Name, packet);
+
             return packet;
         }
 
-        internal static async Task<LoginDataPacket> AddAccount(string Username, string Password)
+        internal static async Task<LoginDataPacket> AddAccount(string username, string password)
         {
             var pvp = new PVPNetConnection();
             var credentials = new AuthenticationCredentials
             {
                 ClientVersion = Version,
-                AuthToken = "",
-                Password = Password,
-                IpAddress = ""
+                AuthToken = string.Empty,
+                Password = password,
+                IpAddress = string.Empty
             };
             //pvp.Login();
             return new LoginDataPacket();
@@ -249,7 +264,7 @@ namespace LegendaryClient.Logic
         /// <summary>
         ///     The current directory the client is running from
         /// </summary>
-        internal static string ExecutingDirectory = "";
+        internal static string ExecutingDirectory = string.Empty;
 
         /// <summary>
         ///     Riot's database with all the client data
@@ -409,7 +424,7 @@ namespace LegendaryClient.Logic
 
         internal static void ChatClientConnect(object sender)
         {
-            Level = Convert.ToInt32(LoginPacket.AllSummonerData.SummonerLevel.Level);
+            Level = System.Convert.ToInt32(LoginPacket.AllSummonerData.SummonerLevel.Level);
             Groups.Add(new Group("Online"));
 
             //Get all groups
@@ -614,32 +629,32 @@ namespace LegendaryClient.Logic
                         {
                             case "profileIcon":
                                 reader.Read();
-                                Player.ProfileIcon = Convert.ToInt32(reader.Value);
+                                Player.ProfileIcon = System.Convert.ToInt32(reader.Value);
                                 break;
 
                             case "level":
                                 reader.Read();
-                                Player.Level = Convert.ToInt32(reader.Value);
+                                Player.Level = System.Convert.ToInt32(reader.Value);
                                 break;
 
                             case "wins":
                                 reader.Read();
-                                Player.Wins = Convert.ToInt32(reader.Value);
+                                Player.Wins = System.Convert.ToInt32(reader.Value);
                                 break;
 
                             case "leaves":
                                 reader.Read();
-                                Player.Leaves = Convert.ToInt32(reader.Value);
+                                Player.Leaves = System.Convert.ToInt32(reader.Value);
                                 break;
 
                             case "rankedWins":
                                 reader.Read();
-                                Player.RankedWins = Convert.ToInt32(reader.Value);
+                                Player.RankedWins = System.Convert.ToInt32(reader.Value);
                                 break;
 
                             case "timeStamp":
                                 reader.Read();
-                                Player.Timestamp = Convert.ToInt64(reader.Value);
+                                Player.Timestamp = System.Convert.ToInt64(reader.Value);
                                 break;
 
                             case "statusMsg":
@@ -711,17 +726,17 @@ namespace LegendaryClient.Logic
             byte[] data = Encoding.UTF8.GetBytes(Subject);
             SHA1 sha = new SHA1CryptoServiceProvider();
             byte[] result = sha.ComputeHash(data);
-            string obfuscatedName = "";
+            string obfuscatedName = string.Empty;
             int incrementValue = 0;
             while (incrementValue < result.Length)
             {
                 int bitHack = result[incrementValue];
-                obfuscatedName = obfuscatedName + Convert.ToString(((uint)(bitHack & 240) >> 4), 16);
-                obfuscatedName = obfuscatedName + Convert.ToString(bitHack & 15, 16);
+                obfuscatedName = obfuscatedName + System.Convert.ToString(((uint)(bitHack & 240) >> 4), 16);
+                obfuscatedName = obfuscatedName + System.Convert.ToString(bitHack & 15, 16);
                 incrementValue = incrementValue + 1;
             }
-            obfuscatedName = Regex.Replace(obfuscatedName, @"/\s+/gx", "");
-            obfuscatedName = Regex.Replace(obfuscatedName, @"/[^a-zA-Z0-9_~]/gx", "");
+            obfuscatedName = Regex.Replace(obfuscatedName, @"/\s+/gx", string.Empty);
+            obfuscatedName = Regex.Replace(obfuscatedName, @"/[^a-zA-Z0-9_~]/gx", string.Empty);
 
             return Type + "~" + obfuscatedName;
         }
@@ -811,6 +826,7 @@ namespace LegendaryClient.Logic
             foreach (Page p in Pages.Where(p => p.GetType() == page.GetType()))
             {
                 Container.Content = p.Content;
+
                 return;
             }
             Container.Content = page.Content;
@@ -891,7 +907,7 @@ namespace LegendaryClient.Logic
         /// <summary>
         ///     Game Name of the current game that the client is connected to
         /// </summary>
-        internal static string GameName = "";
+        internal static string GameName = string.Empty;
 
         /// <summary>
         ///     The DTO of the game lobby when connected to a custom game
@@ -964,7 +980,7 @@ namespace LegendaryClient.Logic
 
                             default:
                                 messageOver.MessageTextBox.Text = notification.MessageCode + Environment.NewLine;
-                                messageOver.MessageTextBox.Text = Convert.ToString(notification.MessageArgument);
+                                messageOver.MessageTextBox.Text = System.Convert.ToString(notification.MessageArgument);
                                 break;
                         }
                         OverlayContainer.Content = messageOver.Content;
@@ -1021,9 +1037,9 @@ namespace LegendaryClient.Logic
             }));
         }
 
-        internal static string InternalQueueToPretty(string InternalQueue)
+        internal static string InternalQueueToPretty(string internalQueue)
         {
-            switch (InternalQueue)
+            switch (internalQueue)
             {
                 case "matching-queue-NORMAL-5x5-game-queue":
                     return "Normal 5v5";
@@ -1095,36 +1111,36 @@ namespace LegendaryClient.Logic
                     return "King Poro 5v5";
 
                 default:
-                    return InternalQueue;
+                    return internalQueue;
             }
         }
 
         /// <summary>
         ///     Super complex method to get the queue name when it is unknown
         /// </summary>
-        /// <param name="QueueName"></param>
+        /// <param name="queueName"></param>
         /// <returns></returns>
-        private static string convert(string QueueName)
+        private static string Convert(string queueName)
         {
             string result = string.Empty;
-            string Queueinternal = "";
-            string Bots = "";
-            const string Players = "";
-            const string Extra = "";
-            string start = QueueName.Replace("matching-queue-", "").Replace("-game-queue", "");
+            string queueinternal = string.Empty;
+            string bots = string.Empty;
+            const string players = "";
+            const string extra = "";
+            string start = queueName.Replace("matching-queue-", string.Empty).Replace("-game-queue", string.Empty);
             string[] x = start.Split('_');
             if (x[1].ToLower() == "bot")
             {
-                Bots = " Bots";
+                bots = " Bots";
                 string[] m = x[3].Split('-');
             }
             else if (x[0].ToLower() == "bot" && x[1].ToLower() == "intro")
             {
-                Queueinternal = "Intro";
-                Bots = "Bots";
+                queueinternal = "Intro";
+                bots = "Bots";
             }
 
-            result = string.Format("{0}{1} {2} {3}", Queueinternal, Bots, Players, Extra);
+            result = string.Format("{0}{1} {2} {3}", queueinternal, bots, players, extra);
             return result;
         }
 
@@ -1152,8 +1168,6 @@ namespace LegendaryClient.Logic
         }
 
         internal static string Location;
-        internal static string LoLLauncherLocation;
-        internal static string LOLCLIENTVERSION;
         internal static string RootLocation;
 
         internal static void LaunchGame()
@@ -1175,13 +1189,13 @@ namespace LegendaryClient.Logic
                                     CurrentGame.EncryptionKey + " " +
                                     CurrentGame.SummonerId + "\"";
             p.Start();
-            Timer t = new Timer
+            var t = new Timer
             {
                 Interval = 5000,
             };
             t.Tick += (o, m) =>
                 {
-                    LegendaryClient.GameScouter scouter = new GameScouter();
+                    GameScouter scouter = new GameScouter();
                     scouter.LoadScouter(LoginPacket.AllSummonerData.Summoner.Name);
                     scouter.Show();
                     scouter.Activate();
@@ -1295,12 +1309,13 @@ namespace LegendaryClient.Logic
                     continue;
 
                 Char firstChar = Char.ToUpper(words[i][0]);
-                String rest = "";
+                String rest = string.Empty;
                 if (words[i].Length > 1)
                     rest = words[i].Substring(1).ToLower();
 
                 words[i] = firstChar + rest;
             }
+
             return String.Join(" ", words);
         }
 
@@ -1317,6 +1332,7 @@ namespace LegendaryClient.Logic
                 result.StreamSource = stream;
                 result.EndInit();
                 result.Freeze();
+
                 return result;
             }
         }
@@ -1340,16 +1356,16 @@ namespace LegendaryClient.Logic
         }
 
         //Get Image
-        public static BitmapImage GetImage(string Address)
+        public static BitmapImage GetImage(string address)
         {
-            var UriSource = new Uri(Address, UriKind.RelativeOrAbsolute);
-            if (File.Exists(Address) || Address.StartsWith("/LegendaryClient;component"))
-                return new BitmapImage(UriSource);
+            var uriSource = new Uri(address, UriKind.RelativeOrAbsolute);
+            if (File.Exists(address) || address.StartsWith("/LegendaryClient;component"))
+                return new BitmapImage(uriSource);
 
-            Log("Cannot find " + Address, "WARN");
-            UriSource = new Uri("/LegendaryClient;component/NONE.png", UriKind.RelativeOrAbsolute);
+            Log("Cannot find " + address, "WARN");
+            uriSource = new Uri("/LegendaryClient;component/NONE.png", UriKind.RelativeOrAbsolute);
 
-            return new BitmapImage(UriSource);
+            return new BitmapImage(uriSource);
         }
         #endregion Public Helper Methods
 
@@ -1357,21 +1373,21 @@ namespace LegendaryClient.Logic
 
         internal static void ChatClient_OnPresence(object sender, Presence pres)
         {
-            if (pres.InnerText == "")
+            if (pres.InnerText == string.Empty)
                 ChatClient.Presence(CurrentPresence, GetPresence(), presenceStatus, 0);
         }
 
-        internal static string EncryptStringAES(this string input, string Secret)
+        internal static string EncryptStringAES(this string input, string secret)
         {
             string output = String.Empty;
             var aesAlg = new RijndaelManaged();
-            if (String.IsNullOrEmpty(input) || String.IsNullOrEmpty(Secret))
+            if (String.IsNullOrEmpty(input) || String.IsNullOrEmpty(secret))
                 return output;
 
             try
             {
                 // generate the key from the shared secret and the salt
-                var key = new Rfc2898DeriveBytes(Secret, Encoding.ASCII.GetBytes("o6806642kbM7c5"));
+                var key = new Rfc2898DeriveBytes(secret, Encoding.ASCII.GetBytes("o6806642kbM7c5"));
                 // Create a RijndaelManaged object
                 aesAlg.Key = key.GetBytes(aesAlg.KeySize / 8);
 
@@ -1392,7 +1408,7 @@ namespace LegendaryClient.Logic
                             swEncrypt.Write(input);
                         }
                     }
-                    output = Convert.ToBase64String(msEncrypt.ToArray());
+                    output = System.Convert.ToBase64String(msEncrypt.ToArray());
                 }
             }
             finally
@@ -1400,6 +1416,7 @@ namespace LegendaryClient.Logic
                 // Clear the RijndaelManaged object.
                 aesAlg.Clear();
             }
+
             return output;
         }
 
@@ -1416,7 +1433,7 @@ namespace LegendaryClient.Logic
                 var key = new Rfc2898DeriveBytes(Secret, Encoding.ASCII.GetBytes("o6806642kbM7c5"));
 
                 // Create the streams used for decryption.                
-                byte[] bytes = Convert.FromBase64String(input);
+                byte[] bytes = System.Convert.FromBase64String(input);
                 using (var msDecrypt = new MemoryStream(bytes))
                 {
                     // Create a RijndaelManaged object
@@ -1468,20 +1485,18 @@ namespace LegendaryClient.Logic
             try
             {
                 string filecontent = null;
-                System.Windows.Forms.OpenFileDialog dlg = new System.Windows.Forms.OpenFileDialog();
+                var dlg = new System.Windows.Forms.OpenFileDialog();
                 if (String.IsNullOrEmpty(filename))
                 {
                     dlg.DefaultExt = ".png";
-                    dlg.Filter = "Key Files (*.key)|*.key|Sha1 Key Files(*.Sha1Key)|*Sha1Key";
+                    dlg.Filter = @"Key Files (*.key)|*.key|Sha1 Key Files(*.Sha1Key)|*Sha1Key";
                     System.Windows.Forms.DialogResult result = dlg.ShowDialog();
                     if (result == System.Windows.Forms.DialogResult.OK)
                         filecontent = File.ReadAllText(dlg.FileName).ToSHA1();
                 }
                 else
-                {
                     if (File.Exists(filename))
                         filecontent = File.ReadAllText(filename).ToSHA1();
-                }
 
                 if (filecontent != null)
                 {
@@ -1489,7 +1504,7 @@ namespace LegendaryClient.Logic
                     {
                         if (client.DownloadString("http://eddy5641.github.io/LegendaryClient/Data.sha1").Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)[0] == filecontent)
                         {
-                            Settings.Default.devKeyLoc = filename == null ? dlg.FileName : filename;
+                            Settings.Default.devKeyLoc = filename ?? dlg.FileName;
                             Settings.Default.Save();
                             return true;
                         }
@@ -1498,8 +1513,8 @@ namespace LegendaryClient.Logic
             }
             catch (Exception ee)
             {
-                Client.Log("Failed to authernticate", "ERROR");
-                Client.Log(ee.ToString(), "ERROR");
+                Log("Failed to authernticate", "ERROR");
+                Log(ee.ToString(), "ERROR");
             }
             return false;
         }
@@ -1516,6 +1531,8 @@ namespace LegendaryClient.Logic
             ChatClient.Password = userpass.Value;
             ChatClient.Login();
         }
+
+        public static string UpdateRegion { get; set; }
     }
 
 

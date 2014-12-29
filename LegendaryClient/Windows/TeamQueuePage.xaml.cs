@@ -135,9 +135,9 @@ namespace LegendaryClient.Windows
             else
             {
                 Client.GameStatus = "outOfGame";
-                Client.SetChatHover();
-                Client.ClearPage(typeof(TeamQueuePage));
+                Client.SetChatHover();                
                 uiLogic.UpdateMainPage();
+                Client.ClearPage(typeof(TeamQueuePage));
                 Client.Log("Failed to join room.");
             }
         }
@@ -268,6 +268,21 @@ namespace LegendaryClient.Windows
                         var invitePlayer = new InvitePlayer();
                         invitePlayer.StatusLabel.Content = InviteeStateTitleCase;
                         invitePlayer.PlayerLabel.Content = statsx.SummonerName;
+                        switch (InviteeState)
+                        {
+                            case "owner":
+                            case "accepted":
+                            case "creator":
+                                invitePlayer.StatusLabel.Foreground = Brushes.Green;
+                                break;
+                            case "pending":
+                                invitePlayer.StatusLabel.Foreground = Brushes.Yellow;
+                                break;
+                            case "declined":
+                            case "quit":
+                                invitePlayer.StatusLabel.Foreground = Brushes.Red;
+                                break;
+                        }
                         Client.InviteListView.Items.Add(invitePlayer);
                     }
 
@@ -404,17 +419,8 @@ namespace LegendaryClient.Windows
                 {
                     if (QueueDTO.GameState == "TERMINATED")
                     {
-                        Client.inQueueTimer.Visibility = Visibility.Visible;
                         Client.HasPopped = false;
-                        Client.OverlayContainer.Visibility = Visibility.Hidden;
-                        Client.OverlayContainer.Content = null;
-                        if (QueueDTO.QueuePosition != 0) //They changed this as soon as I fixed it. Damnit riot lol.
-                        {
-                            setStartButtonText("Start Game");
-                            inQueue = false;
-                            Client.inQueueTimer.Visibility = Visibility.Hidden;
-                            Client.PVPNet.PurgeFromQueues();
-                        }
+                        Client.PVPNet.OnMessageReceived += GotQueuePop;
                     }
                 }));
             }
@@ -516,11 +522,12 @@ namespace LegendaryClient.Windows
             await Client.PVPNet.PurgeFromQueues();
             inQueue = false;
             Dispatcher.BeginInvoke(DispatcherPriority.Input, new ThreadStart(() =>
-                Client.inQueueTimer.Visibility = Visibility.Hidden)); 
+                Client.inQueueTimer.Visibility = Visibility.Hidden));
+            PingTimer.Stop();
             Client.GameStatus = "outOfGame";
             Client.SetChatHover();
-            Client.ClearPage(typeof(TeamQueuePage));
             uiLogic.UpdateMainPage();
+            Client.ClearPage(typeof(TeamQueuePage));
             Client.ReturnButton.Visibility = Visibility.Hidden;
         }
 
@@ -568,6 +575,28 @@ namespace LegendaryClient.Windows
                     Client.OverlayContainer.Visibility = Visibility.Visible;
                 }));
             }
+        }
+        private void RestartDodgePop(object sender, object message)
+        {
+            if (message is GameDTO)
+            {
+                var queue = message as GameDTO;
+                if (queue.GameState == "TERMINATED")
+                {
+                    Client.runonce = false;
+                    Client.PlayerAccepedQueue += Client_PlayerAccepedQueue;
+                }
+            }
+            else if (message is PlayerCredentialsDto)
+            {
+                Client.PVPNet.OnMessageReceived -= RestartDodgePop;
+            }
+        }
+
+        void Client_PlayerAccepedQueue(bool accept)
+        {
+            if (accept)
+                Client.PVPNet.OnMessageReceived += RestartDodgePop;
         }
 
         private bool makeRanked = false;
@@ -640,6 +669,7 @@ namespace LegendaryClient.Windows
                 Dispatcher.Invoke(() =>
                 {
                     Client.inQueueTimer.Visibility = Visibility.Hidden;
+                    TeamListView.Opacity = 1D;
                 });
             }
         }
@@ -697,6 +727,7 @@ namespace LegendaryClient.Windows
             {
                 if (Client.inQueueTimer.Visibility == Visibility.Hidden)
                     Client.inQueueTimer.Visibility = Visibility.Visible;
+                TeamListView.Opacity = 0.3D;
             }));
             Client.timeStampSince = (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, 0).ToLocalTime()).TotalMilliseconds;
             Client.SetChatHover();
@@ -743,6 +774,19 @@ namespace LegendaryClient.Windows
             Client.CallString = ChatTextBox.Text;
             CreateText("You will insta call: \"" + Client.CallString + "\" when you enter champ select", Brushes.OrangeRed);
             ChatTextBox.Text = string.Empty;
+        }
+
+        public void VisualQueueLeave()
+        {
+            setStartButtonText("Start Game");
+            inQueue = false;
+            Client.GameStatus = "outOfGame";
+            Client.SetChatHover();
+            Dispatcher.Invoke(() =>
+            {
+                Client.inQueueTimer.Visibility = Visibility.Hidden;
+                TeamListView.Opacity = 1D;
+            });
         }
     }
 }

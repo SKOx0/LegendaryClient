@@ -136,7 +136,8 @@ namespace LegendaryClient.Windows
                 var message =
                     Client.LoginPacket.BroadcastNotification.BroadcastMessages[0] as Dictionary<string, object>;
                 if (message != null)
-                    BroadcastMessage.Text = Convert.ToString(message["content"]);
+                    BroadcastMessage.Text = 
+                        message.ToString();
             }
 
             foreach (PlayerStatSummary x in Client.LoginPacket.PlayerStatSummaries.PlayerStatSummarySet)
@@ -158,8 +159,15 @@ namespace LegendaryClient.Windows
             int profileIconId = Client.LoginPacket.AllSummonerData.Summoner.ProfileIconId;
             var uriSource =
                 new Uri(Path.Combine(Client.ExecutingDirectory, "Assets", "profileicon", profileIconId + ".png"),
-                    UriKind.RelativeOrAbsolute);
-            ProfileImage.Source = new BitmapImage(uriSource);
+                UriKind.RelativeOrAbsolute);
+            try
+            {
+                ProfileImage.Source = new BitmapImage(uriSource);
+            }
+            catch
+            {
+                Client.Log("Can't load profile image.", "ERROR");
+            }
             Client.MainPageProfileImage = ProfileImage;
         }
 
@@ -450,7 +458,10 @@ namespace LegendaryClient.Windows
                     {
                         string spectatorJson;
                         using (var client = new WebClient())
+                        {
+                            client.Encoding = System.Text.Encoding.UTF8;
                             spectatorJson = client.DownloadString(region.SpectatorLink + "featured");
+                        }
 
                         var serializer = new JavaScriptSerializer();
                         var deserializedJson = serializer.Deserialize<Dictionary<string, object>>(spectatorJson);

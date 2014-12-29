@@ -1,17 +1,17 @@
-﻿#region
+#region
 
 using System;
-using System.Windows;
-using LegendaryClient.Logic;
-using LegendaryClient.Properties;
-using System.Windows.Controls;
-using System.Threading;
-using System.Windows.Threading;
-using PVPNetConnect.RiotObjects.Platform.Statistics;
 using System.Collections.Generic;
-using LegendaryClient.Controls;
-using LegendaryClient.Logic.SQLite;
+using System.Threading;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
+using LegendaryClient.Controls;
+using LegendaryClient.Logic;
+using LegendaryClient.Logic.SQLite;
+using LegendaryClient.Properties;
+using PVPNetConnect.RiotObjects.Platform.Statistics;
 
 #endregion
 
@@ -22,8 +22,9 @@ namespace LegendaryClient.Windows.Profile
     /// </summary>
     public partial class MatchHistoryOnline
     {
-        private string SumName;
-        private List<MatchStats> GameStats = new List<MatchStats>();
+        private string _sumName;
+        private readonly List<MatchStats> _gameStats = new List<MatchStats>();
+
         public MatchHistoryOnline(String name = "")
         {
             InitializeComponent();
@@ -31,9 +32,11 @@ namespace LegendaryClient.Windows.Profile
 
             //Started work on
             if (String.IsNullOrEmpty(name))
+            {
                 name = Client.LoginPacket.AllSummonerData.Summoner.Name;
+            }
 
-            SumName = name;
+            _sumName = name;
         }
 
         public void Change()
@@ -45,47 +48,45 @@ namespace LegendaryClient.Windows.Profile
             Resources.MergedDictionaries.Add(themeAccent);
         }
 
-        public void Update(double AccountId)
+        public void Update(double accountId)
         {
-            Client.PVPNet.GetRecentGames(AccountId, new RecentGames.Callback(GotRecentGames));
+            Client.PVPNet.GetRecentGames(accountId, GotRecentGames);
         }
 
         public void GotRecentGames(RecentGames result)
         {
-            GameStats.Clear();
+            _gameStats.Clear();
             result.GameStatistics.Sort((s1, s2) => s2.CreateDate.CompareTo(s1.CreateDate));
-            foreach (PlayerGameStats Game in result.GameStatistics)
+            foreach (var game in result.GameStatistics)
             {
-                Game.GameType = Client.TitleCaseString(Game.GameType.Replace("_GAME", "").Replace("MATCHED", "NORMAL"));
-                MatchStats Match = new MatchStats();
-
-                foreach (RawStat Stat in Game.Statistics)
+                game.GameType =
+                    Client.TitleCaseString(game.GameType.Replace("_GAME", string.Empty).Replace("MATCHED", "NORMAL"));
+                var match = new MatchStats();
+                foreach (var stat in game.Statistics)
                 {
-                    var type = typeof(MatchStats);
-                    string fieldName = Client.TitleCaseString(Stat.StatType.Replace('_', ' ')).Replace(" ", "");
+                    var type = typeof (MatchStats);
+                    var fieldName = Client.TitleCaseString(stat.StatType.Replace('_', ' ')).Replace(" ", string.Empty);
                     var f = type.GetField(fieldName);
-                    f.SetValue(Match, Stat.Value);
+                    f.SetValue(match, stat.Value);
                 }
-
-                Match.Game = Game;
-
-                GameStats.Add(Match);
+                match.Game = game;
+                _gameStats.Add(match);
             }
 
             Dispatcher.BeginInvoke(DispatcherPriority.Input, new ThreadStart(() =>
             {
                 GamesListView.Items.Clear();
-                foreach (MatchStats stats in GameStats)
+                foreach (var stats in _gameStats)
                 {
-                    RecentGameOverview item = new RecentGameOverview();
-                    champions GameChamp = champions.GetChampion((int)Math.Round(stats.Game.ChampionId));
-                    item.ChampionImage.Source = GameChamp.icon;
-                    item.ChampionNameLabel.Content = GameChamp.displayName;
+                    var item = new RecentGameOverview();
+                    var gameChamp = champions.GetChampion((int) Math.Round(stats.Game.ChampionId));
+                    item.ChampionImage.Source = gameChamp.icon;
+                    item.ChampionNameLabel.Content = gameChamp.displayName;
                     item.ScoreLabel.Content =
                         string.Format("{0}/{1}/{2} ",
-                        stats.ChampionsKilled,
-                        stats.NumDeaths,
-                        stats.Assists);
+                            stats.ChampionsKilled,
+                            stats.NumDeaths,
+                            stats.Assists);
 
                     switch (stats.Game.QueueType)
                     {
@@ -130,31 +131,40 @@ namespace LegendaryClient.Windows.Profile
                     item.IPEarnedLabel.Content = "+" + stats.Game.IpEarned + " IP";
                     item.PingLabel.Content = stats.Game.UserServerPing + "ms";
 
-                    BrushConverter bc = new BrushConverter();
-                    Brush brush = (Brush)bc.ConvertFrom("#FF609E74");
+                    var bc = new BrushConverter();
+                    var brush = (Brush) bc.ConvertFrom("#FF609E74");
 
-                    if (stats.Lose == 1)
-                        brush = (Brush)bc.ConvertFrom("#FF9E6060");
-
-                    else if (stats.Game.IpEarned == 0)
-                        brush = (Brush)bc.ConvertFrom("#FFE27100");
+                    if (Math.Abs(stats.Lose - 1) < .00001)
+                    {
+                        brush = (Brush) bc.ConvertFrom("#FF9E6060");
+                    }
+                    else if (Math.Abs(stats.Game.IpEarned) < .00001)
+                    {
+                        brush = (Brush) bc.ConvertFrom("#FFE27100");
+                    }
 
                     item.GridView.Background = brush;
-                    item.GridView.Width = 250;
+                    item.GridView.Width = 280;
                     GamesListView.Items.Add(item);
                 }
-                if (GamesListView.Items.Count > 0) GamesListView.SelectedIndex = 0;
+                if (GamesListView.Items.Count > 0)
+                {
+                    GamesListView.SelectedIndex = 0;
+                }
             }));
         }
 
         private void GamesListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (GamesListView.SelectedIndex != -1)
+            if (GamesListView.SelectedIndex == -1)
             {
-                MatchStats stats = GameStats[GamesListView.SelectedIndex];
-                Browser.Source = new Uri("http://matchhistory.na.leagueoflegends.com/en/#match-details/" + Client.Region.InternalName + "/" + (int)Math.Round(stats.Game.GameId) + "/" + stats.Game.UserId);
-                
+                return;
             }
+
+            var stats = _gameStats[GamesListView.SelectedIndex];
+            Browser.Source =
+                new Uri("http://matchhistory.na.leagueoflegends.com/en/#match-details/" + Client.Region.InternalName +
+                        "/" + (int) Math.Round(stats.Game.GameId) + "/" + stats.Game.UserId + "?tab=overview");
         }
     }
 }

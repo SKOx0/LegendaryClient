@@ -94,7 +94,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
-      <HintPath>..\packages\Newtonsoft.Json.6.0.6\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.6.0.7\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="RAFlibPlus">
       <HintPath>..\DLLS\RAFlibPlus.dll</HintPath>
@@ -170,6 +170,9 @@
     <Compile Include="Controls\GameScouter\TinyRuneMasteryData.xaml.cs">
       <DependentUpon>TinyRuneMasteryData.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\InnerChatItem.xaml.cs">
+      <DependentUpon>InnerChatItem.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\PlayerStatisticsChampSelect.xaml.cs">
       <DependentUpon>PlayerStatisticsChampSelect.xaml</DependentUpon>
     </Compile>
@@ -222,6 +225,9 @@
     <Compile Include="GameScouter.xaml.cs">
       <DependentUpon>GameScouter.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Logic\JSON\FreeToPlayChampions.cs" />
+    <Compile Include="Logic\Region\PBE.cs" />
+    <Compile Include="Logic\SoundLogic\QueuePopSound.cs" />
     <Compile Include="Logic\uiLogic.cs" />
     <Compile Include="Logic\FilterChat.cs" />
     <Compile Include="Logic\GameClientSettings\General.cs" />
@@ -259,6 +265,12 @@
     <Compile Include="Logic\TempRunes\LCRunePages.cs" />
     <Compile Include="Logic\TempRunes\LcRunes\Rune.cs" />
     <Compile Include="Logic\TempRunes\LcRunes\RuneStats.cs" />
+    <Compile Include="Logic\UpdateRegion\BaseUpdateRegion.cs" />
+    <Compile Include="Logic\UpdateRegion\China.cs" />
+    <Compile Include="Logic\UpdateRegion\Garena.cs" />
+    <Compile Include="Logic\UpdateRegion\Korea.cs" />
+    <Compile Include="Logic\UpdateRegion\Live.cs" />
+    <Compile Include="Logic\UpdateRegion\PBE.cs" />
     <Compile Include="ReplayElements\ChampionItem.xaml.cs">
       <DependentUpon>ChampionItem.xaml</DependentUpon>
     </Compile>
@@ -519,6 +531,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Controls\GameScouter\TinyRuneMasteryData.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\InnerChatItem.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -1044,6 +1060,8 @@
     <Resource Include="chat.png" />
     <Resource Include="Locked.png" />
     <Resource Include="joinchat.png" />
+    <Resource Include="accepted.png" />
+    <Resource Include="declined.png" />
     <Content Include="netlib.Dns.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -1056,6 +1074,7 @@
     </Content>
     <Resource Include="trade.png" />
     <Resource Include="star.png" />
+    <Resource Include="undecided.png" />
     <Content Include="wLib.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
