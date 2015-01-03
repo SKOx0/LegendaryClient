@@ -7,6 +7,7 @@ using System.Windows.Threading;
 using LegendaryClient.Logic;
 using LegendaryClient.Properties;
 using PVPNetConnect.RiotObjects.Platform.Game;
+using System.Diagnostics;
 
 #endregion
 
@@ -17,10 +18,16 @@ namespace LegendaryClient.Windows
     /// </summary>
     public partial class InGame
     {
-        public InGame()
+        public InGame(bool start = false)
         {
             InitializeComponent();
             Change();
+            if (start)
+            {
+                Process[] lol = Process.GetProcessesByName("League of Legends.exe");
+                if (lol.Length == 0)
+                    Client.LaunchGame();
+            }
 
             Client.PVPNet.OnMessageReceived += Update_OnMessageReceived;
             Client.IsInGame = true;

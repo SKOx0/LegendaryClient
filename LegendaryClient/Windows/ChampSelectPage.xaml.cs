@@ -391,6 +391,10 @@ namespace LegendaryClient.Windows
                             {
                                 if (play.SummonerId == Client.LoginPacket.AllSummonerData.Summoner.SumId)
                                 {
+                                    if (Settings.Default.PickBanFocus)
+                                        Client.MainWin.Focus();
+                                    if (Settings.Default.PickBanFlash)
+                                        Client.MainWin.FlashWindow();
                                     //Allows us to instapick any champ we own. 
                                     if (Client.usingInstaPick)
                                     {
@@ -588,7 +592,10 @@ namespace LegendaryClient.Windows
                         {
                             var player = tempParticipant as PlayerParticipant;
                             if (!String.IsNullOrEmpty(player.SummonerName))
+                            {
                                 control.PlayerName.Content = player.SummonerName;
+                                control._sumName = player.SummonerName;
+                            }
                             else
                             {
                                 AllPublicSummonerDataDTO summoner =
@@ -722,7 +729,8 @@ namespace LegendaryClient.Windows
                     return;
 
                 HasLaunchedGame = true;
-                Client.LaunchGame();
+
+                
                 if (Settings.Default.AutoRecordGames)
                 {
                     Dispatcher.InvokeAsync(async () =>
@@ -1020,10 +1028,13 @@ namespace LegendaryClient.Windows
         /// <returns></returns>
         internal ChampSelectPlayer RenderPlayer(PlayerChampionSelectionDTO selection, PlayerParticipant player)
         {
-            var control = new ChampSelectPlayer();
+            var control = new ChampSelectPlayer(selection.SummonerInternalName, selection.ChampionId, true);
             //Render champion
             if (selection.ChampionId != 0)
+            {
                 control.ChampionImage.Source = champions.GetChampion(selection.ChampionId).icon;
+                control.Tag = selection.ChampionId;
+            }
 
             //Render summoner spells
             if (selection.Spell1Id != 0)
@@ -1240,7 +1251,7 @@ namespace LegendaryClient.Windows
                 (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, 0).ToLocalTime()).TotalMilliseconds;
             Client.SetChatHover();
 
-            Client.SwitchPage(new InGame());
+            Client.SwitchPage(new InGame(true));
             Client.ClearPage(typeof(ChampSelectPage));
         }
 

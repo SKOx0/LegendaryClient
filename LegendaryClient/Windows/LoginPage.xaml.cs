@@ -129,6 +129,7 @@ namespace LegendaryClient.Windows
                     UriKind.Absolute);
                 c.icon = new BitmapImage(source);
                 Debugger.Log(0, "Log", "Requesting :" + c.name + " champ");
+                Debugger.Log(0, "", Environment.NewLine);
 
                 try
                 {
@@ -591,6 +592,27 @@ namespace LegendaryClient.Windows
         {
             if (UpdateRegionComboBox.SelectedValue != null)
                 Settings.Default.updateRegion = (string)UpdateRegionComboBox.SelectedValue;
+
+            Client.UpdateRegion = (string)UpdateRegionComboBox.SelectedValue;
+            if (!RegionComboBox.Items.IsInUse)
+            {
+                RegionComboBox.Items.Clear();
+                Thread.Sleep(100);
+            }
+            switch (Client.UpdateRegion)
+            {
+                case "PBE": RegionComboBox.ItemsSource = new string[] { "PBE" };
+                    break;
+
+                case "Live": RegionComboBox.ItemsSource = new string[] { "BR", "EUNE", "EUW", "NA", "OCE", "RU", "LAS", "LAN", "TR", "CS" };
+                    break;
+
+                case "Korea": RegionComboBox.ItemsSource = new string[] { "KR" };
+                    break;
+
+                case "Garena": RegionComboBox.ItemsSource = new string[] { "PH", "SG", "SGMY", "TH", "TW", "VN" };
+                    break;
+            }
         }
     }
 }

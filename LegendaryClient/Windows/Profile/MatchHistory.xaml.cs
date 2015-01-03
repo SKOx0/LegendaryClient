@@ -187,7 +187,6 @@ namespace LegendaryClient.Windows.Profile
                     Source = champions.GetChampion((int) Math.Round(stats.Game.ChampionId)).icon
                 };
                 BlueListView.Items.Add(img);
-
                 foreach (var info in stats.Game.FellowPlayers)
                 {
                     img = new Image
@@ -210,6 +209,7 @@ namespace LegendaryClient.Windows.Profile
                 }
 
                 var classType = typeof (MatchStats);
+
                 foreach (var field in classType.GetFields(BindingFlags.Public | BindingFlags.Instance))
                 {
                     if (field.GetValue(stats) is double)
@@ -292,10 +292,10 @@ namespace LegendaryClient.Windows.Profile
             var playerItem = (ProfilePage.KeyValueItem) item.Tag;
             if (_playerItem == null)
             {
+                var Item = items.GetItem(Convert.ToInt32(playerItem.Value));
                 _playerItem = new LargeChatPlayer();
                 Client.MainGrid.Children.Add(_playerItem);
 
-                var Item = items.GetItem(Convert.ToInt32(playerItem.Value));
 
                 _playerItem.PlayerName.Content = Item.name;
 

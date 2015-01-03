@@ -37,14 +37,16 @@ namespace LegendaryClient.Windows
         private LargeChatPlayer PlayerItem;
         private ChatPlayerItem LastPlayerItem;
         private SelectionChangedEventArgs selection;
+        bool loaded = false;
 
         public FriendList()
         {
 
             InitializeComponent();
+            loaded = false;
             if (Settings.Default.StatusMsg != "Set your status message")
                 StatusBox.Text = Settings.Default.StatusMsg;
-            UpdateTimer = new Timer(1000);
+            UpdateTimer = new Timer(5000);
             UpdateTimer.Elapsed += UpdateChat;
             UpdateTimer.Enabled = true;
             UpdateTimer.Start();
@@ -215,8 +217,12 @@ namespace LegendaryClient.Windows
                         ChatListView.Children.Add(groupControl);
                     else Client.Log("Removed a group");
                 }
-                if(ChatListView.Children.Count > 0 && ChatListView.Children[0] is ChatGroup)
+                if(ChatListView.Children.Count > 0 && ChatListView.Children[0] is ChatGroup && loaded)
+                {
+                    //Stop droping 100 times
                     (ChatListView.Children[0] as ChatGroup).GroupGrid_MouseDown(null, null);
+                    loaded = true;
+                }
             }));
         }
 
@@ -283,6 +289,13 @@ namespace LegendaryClient.Windows
                 Client.MainGrid.Children.Add(PlayerItem);
                 Panel.SetZIndex(PlayerItem, 5);
                 PlayerItem.Tag = playerItem;
+                try
+                {
+                    PlayerItem.Note.Text = Client.PlayerNote[playerItem.Username];
+                    PlayerItem.Note.Foreground = Brushes.Green;
+                    PlayerItem.Note.Visibility = Visibility.Visible;
+                }
+                catch { }
                 PlayerItem.PlayerName.Content = playerItem.Username;
                 PlayerItem.PlayerLeague.Content = playerItem.LeagueTier + " " + playerItem.LeagueDivision;
                 PlayerItem.PlayerStatus.Text = playerItem.Status;
@@ -372,7 +385,7 @@ namespace LegendaryClient.Windows
                     PlayerItem.InGameStatus.Visibility = Visibility.Visible;
                 }
 
-                PlayerItem.Width = 250;
+                PlayerItem.Width = 300;
                 PlayerItem.HorizontalAlignment = HorizontalAlignment.Right;
                 PlayerItem.VerticalAlignment = VerticalAlignment.Top;
             }
@@ -423,7 +436,7 @@ namespace LegendaryClient.Windows
         {
             PublicSummoner JID = await Client.PVPNet.GetSummonerByName(FriendAddBox.Text);
             var jid = new JID("sum" + JID.SummonerId, Client.ChatClient.Server, "");
-            string[] groups = new List<String>(new[] { "Online" }).ToArray();
+            string[] groups = new List<String>(new[] { "**Default" }).ToArray();
             Client.ChatClient.Subscribe(jid, "", groups);
             FriendAddBox.Text = "";
         }

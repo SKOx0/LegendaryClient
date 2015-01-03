@@ -52,6 +52,7 @@ using ListView = System.Windows.Controls.ListView;
 using Message = jabber.protocol.client.Message;
 using Timer = System.Windows.Forms.Timer;
 using System.Net;
+using Newtonsoft.Json;
 
 #endregion
 
@@ -67,6 +68,8 @@ namespace LegendaryClient.Logic
         public delegate void OnAccept(bool accept);
 
         public static event OnAccept PlayerAccepedQueue;
+
+        public static StreamString PIPE;
 
         public static void SendAccept(bool accept)
         {
@@ -422,6 +425,7 @@ namespace LegendaryClient.Logic
             await PVPConnect.Accept(GameID);
         }
 
+        public static Dictionary<String, String> PlayerNote = new Dictionary<String, String>();
         internal static void ChatClientConnect(object sender)
         {
             Level = System.Convert.ToInt32(LoginPacket.AllSummonerData.SummonerLevel.Level);
@@ -436,26 +440,37 @@ namespace LegendaryClient.Logic
                 StringHackOne.RemoveAt(0);
                 foreach (
                     string Parse in
-                        StringHackOne.Select(StringHack => StringHack.Split(','))
+                        StringHackOne.Select(StringHack => Regex.Split(StringHack, @"</item>,"))
                             .Select(StringHackTwo => StringHackTwo[0]))
                 {
-                    using (XmlReader reader = XmlReader.Create(new StringReader(Parse)))
+                    string temp;
+                    if (!Parse.Contains("</item>"))
+                        temp = Parse + "</item>";
+                    else
+                        temp = Parse;
+                    var xmlDocument = new XmlDocument();
+                    xmlDocument.LoadXml(temp);
+                    string PlayerJson = JsonConvert.SerializeXmlNode(xmlDocument).Replace("#", "").Replace("@", "");
+                    Debugger.Log(0, "JSON Status", "Player Json loaded: " + PlayerJson);
+                    try
                     {
-                        while (reader.Read())
-                        {
-                            if (!reader.IsStartElement())
-                                continue;
+                        RootObject root = JsonConvert.DeserializeObject<RootObject>(PlayerJson);
 
-                            switch (reader.Name)
-                            {
-                                case "group":
-                                    reader.Read();
-                                    string Group = reader.Value;
-                                    if (Group != "**Default" && Groups.Find(e => e.GroupName == Group) == null)
-                                        Groups.Add(new Group(Group));
-                                    break;
-                            }
-                        }
+                        if (!String.IsNullOrEmpty(root.item.name) && !String.IsNullOrEmpty(root.item.note))
+                            PlayerNote.Add(root.item.name, root.item.note);
+
+                        if (root.item.group.text != "**Default" && Groups.Find(e => e.GroupName == root.item.group.text) == null && root.item.group.text != null)
+                            Groups.Add(new Group(root.item.group.text));
+                    }
+                    catch
+                    {
+                        RootObject2 root = JsonConvert.DeserializeObject<RootObject2>(PlayerJson);
+
+                        if (!String.IsNullOrEmpty(root.item.name) && !String.IsNullOrEmpty(root.item.note))
+                            PlayerNote.Add(root.item.name, root.item.note);
+
+                        if (root.item.group != "**Default" && Groups.Find(e => e.GroupName == root.item.group) == null && root.item.group != null)
+                            Groups.Add(new Group(root.item.group));
                     }
                 }
             }
@@ -1353,6 +1368,11 @@ namespace LegendaryClient.Logic
         public static void Log(String lines, String type = "LOG")
         {
             WriteToLog.Log(lines, type);
+            try
+            {
+                PIPE.WriteString("[" + type + "] " + lines);
+            }
+            catch { }
         }
 
         //Get Image
@@ -1590,5 +1610,41 @@ namespace LegendaryClient.Logic
         public string GroupName { get; set; }
 
         public bool IsOpen { get; set; }
+    }
+
+    public class Groups
+    {
+        public string priority { get; set; }
+        public string text { get; set; }
+    }
+
+    public class JsonItems
+    {
+        public string subscription { get; set; }
+        public string jid { get; set; }
+        public string name { get; set; }
+        public string xmlns { get; set; }
+        public string note { get; set; }
+        public Groups group { get; set; }
+    }
+
+    public class RootObject
+    {
+        public JsonItems item { get; set; }
+    }
+
+    public class JsonItems2
+    {
+        public string subscription { get; set; }
+        public string jid { get; set; }
+        public string name { get; set; }
+        public string xmlns { get; set; }
+        public string note { get; set; }
+        public string group { get; set; }
+    }
+
+    public class RootObject2
+    {
+        public JsonItems2 item { get; set; }
     }
 }
